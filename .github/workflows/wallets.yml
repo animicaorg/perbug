@@ -73,7 +73,11 @@ jobs:
           # the top-level QtCore and Resources), and the code signature was
           # computed over the symlinked layout — so the flattened copy is
           # reported by macOS as "damaged and can't be opened".
-          cp -R build/Perbug-Qt.app "dist/$OUT/"
+          APP_SRC=$(find build -maxdepth 3 -name 'Perbug-Qt.app' -type d \
+            -exec test -d '{}/Contents/Frameworks' \; -print | head -1)
+          test -n "$APP_SRC" || { echo "no deployed .app bundle with Frameworks"; find build -maxdepth 3 -name '*.app'; exit 1; }
+          echo "bundling $APP_SRC"
+          cp -R "$APP_SRC" "dist/$OUT/"
           test -d "dist/$OUT/Perbug-Qt.app" || { echo "deploy produced no .app bundle"; exit 1; }
           test -L "dist/$OUT/Perbug-Qt.app/Contents/Frameworks/QtCore.framework/Versions/Current" \
             || { echo "framework symlinks did not survive the copy"; exit 1; }
