@@ -2,7 +2,7 @@
 
 **Updated for FreeBSD [14.3](https://www.freebsd.org/releases/14.3R/announce/)**
 
-This guide describes how to build bitcoind, command-line utilities, and GUI on FreeBSD.
+This guide describes how to build perbugd, command-line utilities, and GUI on FreeBSD.
 
 ## Preparation
 
@@ -31,10 +31,10 @@ Compile with `-DENABLE_IPC=OFF` if you do not need IPC functionality.
 
 See [dependencies.md](dependencies.md) for a complete overview.
 
-### 2. Clone Bitcoin Repo
+### 2. Clone Perbug Repo
 Now that `git` and all the required dependencies are installed, let's clone the Bitcoin Core repository to a directory. All build scripts and commands will run from this directory.
 ```bash
-git clone https://github.com/bitcoin/bitcoin.git
+git clone https://github.com/perbug/perbug.git
 ```
 
 ### 3. Install Optional Dependencies

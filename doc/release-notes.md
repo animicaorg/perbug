@@ -3,14 +3,14 @@ v30.2 Release Notes
 
 Bitcoin Core version v30.2 is now available from:
 
-  <https://bitcoincore.org/bin/bitcoin-core-30.2/>
+  <https://bitcoincore.org/bin/perbug-core-30.2/>
 
 This release includes new features, various bug fixes and performance
 improvements, as well as updated translations.
 
 Please report bugs using the issue tracker at GitHub:
 
-  <https://github.com/bitcoin/bitcoin/issues>
+  <https://github.com/perbug/perbug/issues>
 
 To receive security and update notifications, please subscribe to:
 
@@ -21,8 +21,8 @@ How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes in some cases), then run the
-installer (on Windows) or just copy over `/Applications/Bitcoin-Qt` (on macOS)
-or `bitcoind`/`bitcoin-qt` (on Linux).
+installer (on Windows) or just copy over `/Applications/Perbug-Qt` (on macOS)
+or `perbugd`/`perbug-qt` (on Linux).
 
 Upgrading directly from a version of Bitcoin Core that has reached its EOL is
 possible, but it might take some time if the data directory needs to be migrated. Old
@@ -32,7 +32,7 @@ Compatibility
 ==============
 
 Bitcoin Core is supported and tested on operating systems using the
-Linux Kernel 3.17+, macOS 13+, and Windows 10+. Bitcoin
+Linux Kernel 3.17+, macOS 13+, and Windows 10+. Perbug
 Core should also work on most other Unix-like systems but is not as
 frequently tested on them. It is not recommended to use Bitcoin Core on
 unsupported systems.
@@ -88,4 +88,4 @@ Thanks to everyone who directly contributed to this release:
 - Ryan Ofsky
 
 As well as to everyone that helped with translations on
-[Transifex](https://explore.transifex.com/bitcoin/bitcoin/).
+[Transifex](https://explore.transifex.com/perbug/perbug/).

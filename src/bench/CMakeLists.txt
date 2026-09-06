@@ -2,8 +2,8 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or https://opensource.org/license/mit/.
 
-add_executable(bench_bitcoin
-  bench_bitcoin.cpp
+add_executable(bench_perbug
+  bench_perbug.cpp
   bench.cpp
   nanobench.cpp
 # Benchmarks:
@@ -57,19 +57,19 @@ add_executable(bench_bitcoin
 )
 
 include(TargetDataSources)
-target_raw_data_sources(bench_bitcoin NAMESPACE benchmark::data
+target_raw_data_sources(bench_perbug NAMESPACE benchmark::data
   data/block413567.raw
 )
 
-target_link_libraries(bench_bitcoin
+target_link_libraries(bench_perbug
   core_interface
   test_util
-  bitcoin_node
+  perbug_node
   Boost::headers
 )
 
 if(ENABLE_WALLET)
-  target_sources(bench_bitcoin
+  target_sources(bench_perbug
     PRIVATE
       coin_selection.cpp
       wallet_balance.cpp
@@ -79,11 +79,11 @@ if(ENABLE_WALLET)
       wallet_ismine.cpp
       wallet_migration.cpp
   )
-  target_link_libraries(bench_bitcoin bitcoin_wallet)
+  target_link_libraries(bench_perbug perbug_wallet)
 endif()
 
 add_test(NAME bench_sanity_check
-  COMMAND bench_bitcoin -sanity-check
+  COMMAND bench_perbug -sanity-check
 )
 
-install_binary_component(bench_bitcoin INTERNAL)
+install_binary_component(bench_perbug INTERNAL)

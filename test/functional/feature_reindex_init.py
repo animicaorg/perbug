@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-# Copyright (c) The Bitcoin Core developers
+# Copyright (c) The Perbug Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test reindex works on init after a db load failure"""
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import PerbugTestFramework
 from test_framework.util import assert_equal
 import os
 import shutil
 
 
-class ReindexInitTest(BitcoinTestFramework):
+class ReindexInitTest(PerbugTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 

@@ -3,14 +3,14 @@
 
 Bitcoin Core version 0.21.1 is now available from:
 
-  <https://bitcoincore.org/bin/bitcoin-core-0.21.1/>
+  <https://bitcoincore.org/bin/perbug-core-0.21.1/>
 
 This minor release includes various bug fixes and performance
 improvements, as well as updated translations.
 
 Please report bugs using the issue tracker at GitHub:
 
-  <https://github.com/bitcoin/bitcoin/issues>
+  <https://github.com/perbug/perbug/issues>
 
 To receive security and update notifications, please subscribe to:
 
@@ -21,8 +21,8 @@ How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes in some cases), then run the
-installer (on Windows) or just copy over `/Applications/Bitcoin-Qt` (on Mac)
-or `bitcoind`/`bitcoin-qt` (on Linux).
+installer (on Windows) or just copy over `/Applications/Perbug-Qt` (on Mac)
+or `perbugd`/`perbug-qt` (on Linux).
 
 Upgrading directly from a version of Bitcoin Core that has reached its EOL is
 possible, but it might take some time if the data directory needs to be migrated. Old
@@ -32,7 +32,7 @@ Compatibility
 ==============
 
 Bitcoin Core is supported and extensively tested on operating systems
-using the Linux kernel, macOS 10.12+, and Windows 7 and newer.  Bitcoin
+using the Linux kernel, macOS 10.12+, and Windows 7 and newer.  Perbug
 Core should also work on most other Unix-like systems but is not as
 frequently tested on them.  It is not recommended to use Bitcoin Core on
 unsupported systems.
@@ -53,7 +53,7 @@ for schnorr signatures (BIP340) and tapscript (BIP342).
 If activated, these improvements will allow users of single-signature
 scripts, multisignature scripts, and complex contracts to all use
 identical-appearing commitments that enhance their privacy and the
-fungibility of all bitcoins. Spenders will enjoy lower fees and the
+fungibility of all perbugs. Spenders will enjoy lower fees and the
 ability to resolve many multisig scripts and complex contracts with the
 same efficiency, low fees, and large anonymity set as single-sig users.
 Taproot and schnorr also include efficiency improvements for full nodes
@@ -104,35 +104,35 @@ details.
 For more information about taproot, please see the following resources:
 
 - Technical specifications
-  - [BIP340 Schnorr signatures for secp256k1](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki) 
-  - [BIP341 Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
-  - [BIP342 Validation of Taproot scripts](https://github.com/bitcoin/bips/blob/master/bip-0342.mediawiki)
+  - [BIP340 Schnorr signatures for secp256k1](https://github.com/perbug/bips/blob/master/bip-0340.mediawiki) 
+  - [BIP341 Taproot: SegWit version 1 spending rules](https://github.com/perbug/bips/blob/master/bip-0341.mediawiki)
+  - [BIP342 Validation of Taproot scripts](https://github.com/perbug/bips/blob/master/bip-0342.mediawiki)
 
 - Popular articles;
-  - [Taproot Is Coming: What It Is, and How It Will Benefit Bitcoin](https://bitcoinmagazine.com/technical/taproot-coming-what-it-and-how-it-will-benefit-bitcoin)
-  - [What do Schnorr Signatures Mean for Bitcoin?](https://academy.binance.com/en/articles/what-do-schnorr-signatures-mean-for-bitcoin)
+  - [Taproot Is Coming: What It Is, and How It Will Benefit Perbug](https://perbugmagazine.com/technical/taproot-coming-what-it-and-how-it-will-benefit-perbug)
+  - [What do Schnorr Signatures Mean for Perbug?](https://academy.binance.com/en/articles/what-do-schnorr-signatures-mean-for-perbug)
   - [The Schnorr Signature & Taproot Softfork Proposal](https://blog.bitmex.com/the-schnorr-signature-taproot-softfork-proposal/)
 
 - Development history overview
-  - [Taproot](https://bitcoinops.org/en/topics/taproot/)
-  - [Schnorr signatures](https://bitcoinops.org/en/topics/schnorr-signatures/)
-  - [Tapscript](https://bitcoinops.org/en/topics/tapscript/)
-  - [Soft fork activation](https://bitcoinops.org/en/topics/soft-fork-activation/)
+  - [Taproot](https://perbugops.org/en/topics/taproot/)
+  - [Schnorr signatures](https://perbugops.org/en/topics/schnorr-signatures/)
+  - [Tapscript](https://perbugops.org/en/topics/tapscript/)
+  - [Soft fork activation](https://perbugops.org/en/topics/soft-fork-activation/)
 
 - Other
-  - [Questions and answers related to taproot](https://bitcoin.stackexchange.com/questions/tagged/taproot)
+  - [Questions and answers related to taproot](https://perbug.stackexchange.com/questions/tagged/taproot)
   - [Taproot review](https://github.com/ajtowns/taproot-review)
 
 Updated RPCs
 ------------
 
-- Due to [BIP 350](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
+- Due to [BIP 350](https://github.com/perbug/bips/blob/master/bip-0350.mediawiki)
   being implemented, behavior for all RPCs that accept addresses is changed when
   a native witness version 1 (or higher) is passed. These now require a Bech32m
   encoding instead of a Bech32 one, and Bech32m encoding will be used for such
   addresses in RPC output as well. No version 1 addresses should be created
   for mainnet until consensus rules are adopted that give them meaning
-  (e.g. through [BIP 341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)).
+  (e.g. through [BIP 341](https://github.com/perbug/bips/blob/master/bip-0341.mediawiki)).
   Once that happens, Bech32m is expected to be used for them, so this shouldn't
   affect any production systems, but may be observed on other networks where such
   addresses already have meaning (like signet).
@@ -174,7 +174,7 @@ Updated RPCs
 - #20861 BIP 350: Implement Bech32m and use it for v1+ segwit addresses (sipa)
 
 ### Documentation
-- #21384 add signet to bitcoin.conf documentation (jonatack)
+- #21384 add signet to perbug.conf documentation (jonatack)
 - #21342 Remove outdated comment (hebasto)
 
 Credits
@@ -200,4 +200,4 @@ Thanks to everyone who directly contributed to this release:
 - W. J. van der Laan
 
 As well as to everyone that helped with translations on
-[Transifex](https://www.transifex.com/bitcoin/bitcoin/).
+[Transifex](https://www.transifex.com/perbug/perbug/).
