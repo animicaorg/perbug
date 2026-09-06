@@ -43,6 +43,9 @@ jobs:
             -DBUILD_GUI=ON \
             -DENABLE_WALLET=ON \
             -DBUILD_TESTS=OFF \
+            -DBUILD_TX=ON \
+            -DBUILD_UTIL=ON \
+            -DBUILD_WALLET_TOOL=ON \
             -DENABLE_IPC=OFF \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix boost@1.85)" \
             -DBoost_INCLUDE_DIR="$(brew --prefix boost@1.85)/include" \
@@ -57,11 +60,15 @@ jobs:
           OUT="perbug-qt-${VER}-macos-arm64"
           mkdir -p "dist/$OUT"
           # The GUI plus the command-line tools people expect alongside it.
-          for b in perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
             find build/bin build/src -name "$b" -type f -perm +111 -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
           done
           cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
           ls -la "dist/$OUT"
+          # A silent partial build must not ship as a release archive.
+          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            ls "dist/$OUT/$b"* >/dev/null 2>&1 || { echo "MISSING BINARY: $b"; exit 1; }
+          done
           cd dist && zip -r "${OUT}.zip" "$OUT"
 
       - uses: actions/upload-artifact@v4
@@ -90,6 +97,9 @@ jobs:
             -DBUILD_GUI=ON ^
             -DENABLE_WALLET=ON ^
             -DBUILD_TESTS=OFF ^
+            -DBUILD_TX=ON ^
+            -DBUILD_UTIL=ON ^
+            -DBUILD_WALLET_TOOL=ON ^
             -DENABLE_IPC=OFF
 
       - name: Build
@@ -108,6 +118,10 @@ jobs:
           find build -name "*.dll" -path "*Release*" -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
           cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
           ls -la "dist/$OUT"
+          # A silent partial build must not ship as a release archive.
+          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            ls "dist/$OUT/$b"* >/dev/null 2>&1 || { echo "MISSING BINARY: $b"; exit 1; }
+          done
           cd dist && 7z a "${OUT}.zip" "$OUT"
 
       - uses: actions/upload-artifact@v4
@@ -127,7 +141,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential cmake pkg-config python3 \
             libevent-dev libboost-dev libsqlite3-dev libzmq3-dev \
-            qt6-base-dev qt6-tools-dev qt6-tools-dev-tools libqrencode-dev \
+            qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools libqrencode-dev \
             libgl1-mesa-dev libxkbcommon-x11-dev
 
       - name: Configure
@@ -137,6 +151,9 @@ jobs:
             -DBUILD_GUI=ON \
             -DENABLE_WALLET=ON \
             -DBUILD_TESTS=OFF \
+            -DBUILD_TX=ON \
+            -DBUILD_UTIL=ON \
+            -DBUILD_WALLET_TOOL=ON \
             -DENABLE_IPC=OFF
 
       - name: Build
@@ -147,11 +164,15 @@ jobs:
           VER="${GITHUB_REF_NAME:-dev}"
           OUT="perbug-qt-${VER}-linux-x64"
           mkdir -p "dist/$OUT"
-          for b in perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
             find build/bin build/src -name "$b" -type f -executable -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
           done
           cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
           ls -la "dist/$OUT"
+          # A silent partial build must not ship as a release archive.
+          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            ls "dist/$OUT/$b"* >/dev/null 2>&1 || { echo "MISSING BINARY: $b"; exit 1; }
+          done
           cd dist && tar czf "${OUT}.tar.gz" "$OUT"
 
       - uses: actions/upload-artifact@v4
