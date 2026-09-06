@@ -68,11 +68,19 @@ jobs:
           VER="${GITHUB_REF_NAME:-dev}"
           OUT="perbug-qt-${VER}-macos-arm64"
           mkdir -p "dist/$OUT"
-          # The self-contained GUI produced by the deploy target.
-          unzip -q build/Perbug-Core.zip -d "dist/$OUT"
-          APP=$(find "dist/$OUT" -maxdepth 2 -name '*.app' -type d | head -1)
-          test -n "$APP" || { echo "deploy produced no .app bundle"; ls -R "dist/$OUT"; exit 1; }
-          echo "bundled GUI: $APP"
+          # Copy the bundle straight out of the build tree. Round-tripping it
+          # through unzip/zip flattens the framework symlinks (Versions/Current,
+          # the top-level QtCore and Resources), and the code signature was
+          # computed over the symlinked layout — so the flattened copy is
+          # reported by macOS as "damaged and can't be opened".
+          cp -R build/Perbug-Qt.app "dist/$OUT/"
+          test -d "dist/$OUT/Perbug-Qt.app" || { echo "deploy produced no .app bundle"; exit 1; }
+          test -L "dist/$OUT/Perbug-Qt.app/Contents/Frameworks/QtCore.framework/Versions/Current" \
+            || { echo "framework symlinks did not survive the copy"; exit 1; }
+          # The signature must still validate after packaging, or users get
+          # "damaged" on first launch.
+          codesign --verify --deep --strict --verbose=2 "dist/$OUT/Perbug-Qt.app" \
+            || { echo "BROKEN app signature"; exit 1; }
           # The command-line tools people expect alongside it.
           for b in perbug perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
             find build/bin build/src -name "$b" -type f -perm +111 -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
@@ -120,7 +128,7 @@ jobs:
           for b in perbug perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
             ls "dist/$OUT/$b" >/dev/null 2>&1 || { echo "MISSING BINARY: $b"; exit 1; }
           done
-          cd dist && zip -r -y "${OUT}.zip" "$OUT"
+          cd dist && ditto -c -k --sequesterRsrc --keepParent "$OUT" "${OUT}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
