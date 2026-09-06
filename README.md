@@ -1,10 +1,12 @@
 Perbug Core integration/staging tree
 =====================================
 
-https://perbugcore.org
+https://perbug.com
 
 For an immediately usable, binary version of the Perbug Core software, see
-https://perbugcore.org/en/download/.
+https://perbug.com/wallets — desktop wallets for macOS (Apple Silicon),
+Windows and Linux, built from this repository by GitHub Actions with
+published SHA256 checksums.
 
 What is Perbug Core?
 ---------------------
@@ -25,7 +27,7 @@ Development Process
 -------------------
 
 The `master` branch is regularly built (see `doc/build-*.md` for instructions) and tested, but it is not guaranteed to be
-completely stable. [Tags](https://github.com/perbug/perbug/tags) are created
+completely stable. [Tags](https://github.com/animicaorg/perbug/tags) are created
 regularly from release branches to indicate new official, stable release versions of Perbug Core.
 
 The https://github.com/perbug-core/gui repository is used exclusively for the
