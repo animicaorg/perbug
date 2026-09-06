@@ -282,8 +282,26 @@ jobs:
             | Windows x64 | `perbug-qt-${{ github.ref_name }}-windows-x64.zip` |
             | Linux x64 | `perbug-qt-${{ github.ref_name }}-linux-x64.tar.gz` |
 
-            Verify with `SHA256SUMS` before running anything.
+            Verify with `SHA256SUMS` before running anything:
+
+            - macOS — `shasum -a 256 -c SHA256SUMS --ignore-missing`
+            - Linux — `sha256sum -c SHA256SUMS --ignore-missing`
+            - Windows — `Get-FileHash .\<file> -Algorithm SHA256`
+
+            ### macOS: "Perbug Core is damaged and can't be opened"
+
+            Nothing is wrong with the download. These builds are signed ad-hoc
+            and are **not notarised**, so macOS quarantines them and reports it
+            with that wording. Right-click → Open does **not** clear it. Remove
+            the quarantine flag:
+
+            ```
+            xattr -dr com.apple.quarantine /Applications/Perbug-Qt.app
+            ```
+
+            The command-line tools need the same treatment, e.g.
+            `xattr -dr com.apple.quarantine ./perbugd`.
 
             macOS builds are **Apple Silicon only** — there is no Intel build.
-            The binaries are unsigned, so macOS will need Gatekeeper approval on
-            first launch (right-click, Open) and Windows may show SmartScreen.
+            On Windows, SmartScreen will warn on first run: choose "More info",
+            then "Run anyway".
