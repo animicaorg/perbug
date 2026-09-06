@@ -133,8 +133,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
+      - name: Restore vcpkg cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/build/vcpkg_installed
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
@@ -152,6 +153,13 @@ jobs:
             -DBUILD_UTIL=ON ^
             -DBUILD_WALLET_TOOL=ON ^
             -DENABLE_IPC=OFF
+
+      - name: Save vcpkg cache
+        if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/build/vcpkg_installed
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Build
         shell: cmd
