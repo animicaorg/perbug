@@ -49,27 +49,78 @@ jobs:
             -DENABLE_IPC=OFF \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6);$(brew --prefix boost@1.85)" \
             -DBoost_INCLUDE_DIR="$(brew --prefix boost@1.85)/include" \
+            -DQT_TRANSLATIONS_DIR="$(brew --prefix qt@6)/share/qt/translations" \
             -DCMAKE_OSX_ARCHITECTURES=arm64
 
       - name: Build
         run: cmake --build build -j"$(sysctl -n hw.logicalcpu)"
+
+      # Links against absolute Homebrew paths otherwise, so the GUI cannot
+      # launch on a Mac without Homebrew. macdeployqtplus copies the Qt
+      # frameworks into Perbug-Qt.app and rewrites the load commands.
+      - name: Bundle app
+        run: |
+          cmake --build build --target deploy
+          ls -la build/*.zip
 
       - name: Package
         run: |
           VER="${GITHUB_REF_NAME:-dev}"
           OUT="perbug-qt-${VER}-macos-arm64"
           mkdir -p "dist/$OUT"
-          # The GUI plus the command-line tools people expect alongside it.
-          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+          # The self-contained GUI produced by the deploy target.
+          unzip -q build/Perbug-Core.zip -d "dist/$OUT"
+          APP=$(find "dist/$OUT" -maxdepth 2 -name '*.app' -type d | head -1)
+          test -n "$APP" || { echo "deploy produced no .app bundle"; ls -R "dist/$OUT"; exit 1; }
+          echo "bundled GUI: $APP"
+          # The command-line tools people expect alongside it.
+          for b in perbug perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
             find build/bin build/src -name "$b" -type f -perm +111 -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
+          done
+          # Same relocation problem as the GUI: copy every non-system dylib in
+          # beside the tools and repoint the load commands at it.
+          mkdir -p "dist/$OUT/lib"
+          for pass in 1 2 3; do
+            for f in "dist/$OUT"/* "dist/$OUT"/lib/*; do
+              [ -f "$f" ] || continue
+              file -b "$f" | grep -q Mach-O || continue
+              otool -L "$f" | tail -n +2 | awk '{print $1}' | while read -r dep; do
+                case "$dep" in
+                  /opt/homebrew/*|/usr/local/*) ;;
+                  *) continue ;;
+                esac
+                base=$(basename "$dep")
+                [ -f "dist/$OUT/lib/$base" ] || { cp -L "$dep" "dist/$OUT/lib/$base"; chmod u+w "dist/$OUT/lib/$base"; }
+                case "$f" in
+                  */lib/*) install_name_tool -change "$dep" "@loader_path/$base" "$f" ;;
+                  *)       install_name_tool -change "$dep" "@executable_path/lib/$base" "$f" ;;
+                esac
+              done
+            done
+          done
+          for f in "dist/$OUT"/lib/*.dylib; do
+            [ -f "$f" ] && install_name_tool -id "@loader_path/$(basename "$f")" "$f"
+          done
+          # arm64 requires a valid signature and install_name_tool broke it.
+          for f in "dist/$OUT"/lib/*.dylib "dist/$OUT"/perbug*; do
+            [ -f "$f" ] && codesign --force --sign - --timestamp=none "$f" 2>/dev/null || true
+          done
+          for b in perbug perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            codesign --verify "dist/$OUT/$b" || { echo "BROKEN SIGNATURE: $b"; exit 1; }
+          done
+          # Nothing may still point outside the archive.
+          for b in perbug perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            if otool -L "dist/$OUT/$b" | tail -n +2 | grep -qE '^\s+(/opt/homebrew|/usr/local)'; then
+              echo "UNBUNDLED DEPENDENCY in $b:"; otool -L "dist/$OUT/$b"; exit 1
+            fi
           done
           cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
           ls -la "dist/$OUT"
           # A silent partial build must not ship as a release archive.
-          for b in perbug perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
-            ls "dist/$OUT/$b"* >/dev/null 2>&1 || { echo "MISSING BINARY: $b"; exit 1; }
+          for b in perbug perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            ls "dist/$OUT/$b" >/dev/null 2>&1 || { echo "MISSING BINARY: $b"; exit 1; }
           done
-          cd dist && zip -r "${OUT}.zip" "$OUT"
+          cd dist && zip -r -y "${OUT}.zip" "$OUT"
 
       - uses: actions/upload-artifact@v4
         with:
