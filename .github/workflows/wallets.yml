@@ -175,6 +175,22 @@ jobs:
           mkdir -p "dist/$OUT"
           find build -name "perbug*.exe" -type f -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
           find build -name "*.dll" -path "*Release*" -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
+          # A Qt app needs its platform plugin in platforms/ or it refuses to
+          # start ("no Qt platform plugin could be initialized"). Copying the
+          # loose DLLs is not enough; windeployqt lays out the plugin tree.
+          WDQ=$(find build/vcpkg_installed -name 'windeployqt.exe' | head -1)
+          if [ -n "$WDQ" ]; then
+            "$WDQ" --release --no-translations --dir "dist/$OUT" "dist/$OUT/perbug-qt.exe" || true
+          fi
+          if [ ! -f "dist/$OUT/platforms/qwindows.dll" ]; then
+            PLUG=$(find build/vcpkg_installed -type d -name platforms -path '*plugins*' | head -1)
+            if [ -n "$PLUG" ]; then
+              mkdir -p "dist/$OUT/platforms"
+              cp "$PLUG"/qwindows*.dll "dist/$OUT/platforms/" 2>/dev/null || true
+            fi
+          fi
+          test -f "dist/$OUT/platforms/qwindows.dll" || {
+            echo "MISSING Qt platform plugin - the GUI would not launch"; exit 1; }
           cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
           ls -la "dist/$OUT"
           # A silent partial build must not ship as a release archive.
