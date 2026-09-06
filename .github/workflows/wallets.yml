@@ -1,0 +1,190 @@
+name: Wallets
+
+# Builds the Perbug Qt wallet for macOS (Apple Silicon), Windows and Linux,
+# and attaches the archives to a GitHub Release.
+#
+# macOS is built on GitHub's macos-14 runners because they are Apple Silicon.
+# Cross-compiling a macOS binary from Linux is not a licensing option, and an
+# Intel build is deliberately not produced — this ships arm64 only.
+#
+# Trigger: push a tag like v30.2.0, or run it by hand.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to publish (e.g. v30.2.0)'
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  macos:
+    name: macOS (Apple Silicon)
+    runs-on: macos-14          # arm64. Do NOT change to macos-13 (Intel).
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install cmake boost libevent qt@6 qrencode zeromq sqlite pkgconf
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DBUILD_GUI=ON \
+            -DENABLE_WALLET=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_BENCH=OFF \
+            -DBUILD_FUZZ_BINARY=OFF \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
+            -DCMAKE_OSX_ARCHITECTURES=arm64
+
+      - name: Build
+        run: cmake --build build -j"$(sysctl -n hw.logicalcpu)"
+
+      - name: Package
+        run: |
+          VER="${GITHUB_REF_NAME:-dev}"
+          OUT="perbug-qt-${VER}-macos-arm64"
+          mkdir -p "dist/$OUT"
+          # The GUI plus the command-line tools people expect alongside it.
+          for b in perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            find build/bin build/src -name "$b" -type f -perm +111 -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
+          done
+          cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
+          ls -la "dist/$OUT"
+          cd dist && zip -r "${OUT}.zip" "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: dist/*.zip
+
+  windows:
+    name: Windows (x64)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/build/vcpkg_installed
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+
+      - name: Configure
+        shell: cmd
+        run: |
+          cmake -B build --preset vs2022 ^
+            -DBUILD_GUI=ON ^
+            -DENABLE_WALLET=ON ^
+            -DBUILD_TESTS=OFF ^
+            -DBUILD_BENCH=OFF ^
+            -DBUILD_FUZZ_BINARY=OFF
+
+      - name: Build
+        shell: cmd
+        run: cmake --build build --config Release -j 4
+
+      - name: Package
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME:-dev}"
+          OUT="perbug-qt-${VER}-windows-x64"
+          mkdir -p "dist/$OUT"
+          find build -name "perbug*.exe" -type f -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
+          find build -name "*.dll" -path "*Release*" -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
+          cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
+          ls -la "dist/$OUT"
+          cd dist && 7z a "${OUT}.zip" "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: dist/*.zip
+
+  linux:
+    name: Linux (x64)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake pkg-config python3 \
+            libevent-dev libboost-dev libsqlite3-dev libzmq3-dev \
+            qt6-base-dev qt6-tools-dev qt6-tools-dev-tools libqrencode-dev
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DBUILD_GUI=ON \
+            -DENABLE_WALLET=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_BENCH=OFF \
+            -DBUILD_FUZZ_BINARY=OFF
+
+      - name: Build
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Package
+        run: |
+          VER="${GITHUB_REF_NAME:-dev}"
+          OUT="perbug-qt-${VER}-linux-x64"
+          mkdir -p "dist/$OUT"
+          for b in perbug-qt perbugd perbug-cli perbug-tx perbug-util perbug-wallet; do
+            find build/bin build/src -name "$b" -type f -executable -exec cp {} "dist/$OUT/" \; 2>/dev/null || true
+          done
+          cp COPYING README.md "dist/$OUT/" 2>/dev/null || true
+          ls -la "dist/$OUT"
+          cd dist && tar czf "${OUT}.tar.gz" "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: dist/*.tar.gz
+
+  release:
+    name: Publish release
+    needs: [macos, windows, linux]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: artifacts }
+      - name: Checksums
+        run: |
+          find artifacts -type f \( -name '*.zip' -o -name '*.tar.gz' \) -exec mv {} . \;
+          sha256sum perbug-qt-* > SHA256SUMS
+          cat SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            perbug-qt-*
+            SHA256SUMS
+          body: |
+            Perbug Qt wallet — ${{ github.ref_name }}
+
+            | platform | file |
+            |---|---|
+            | macOS, Apple Silicon | `perbug-qt-${{ github.ref_name }}-macos-arm64.zip` |
+            | Windows x64 | `perbug-qt-${{ github.ref_name }}-windows-x64.zip` |
+            | Linux x64 | `perbug-qt-${{ github.ref_name }}-linux-x64.tar.gz` |
+
+            Verify with `SHA256SUMS` before running anything.
+
+            macOS builds are **Apple Silicon only** — there is no Intel build.
+            The binaries are unsigned, so macOS will need Gatekeeper approval on
+            first launch (right-click, Open) and Windows may show SmartScreen.
