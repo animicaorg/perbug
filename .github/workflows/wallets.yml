@@ -60,6 +60,23 @@ jobs:
       # frameworks into Perbug-Qt.app and rewrites the load commands.
       - name: Bundle app
         run: |
+          # macdeployqtplus derives Qt's prefix from where the frameworks live
+          # and only falls back to $QTDIR. Homebrew resolves the frameworks to
+          # the qtbase keg, which has no share/qt/translations, so detection
+          # fails, and the script then SKIPS PLUGIN DEPLOYMENT with only a
+          # warning. The app builds green and dies at startup with
+          # "no Qt platform plugin could be initialized".
+          QTDIR=""
+          for c in "$(brew --prefix qtbase 2>/dev/null)" \
+                   "$(brew --prefix qt@6 2>/dev/null)" \
+                   "$(brew --prefix qt 2>/dev/null)"; do
+            if [ -n "$c" ] && [ -f "$c/share/qt/plugins/platforms/libqcocoa.dylib" ]; then
+              QTDIR="$c"; break
+            fi
+          done
+          test -n "$QTDIR" || { echo "cannot locate Qt plugins under any brew prefix"; exit 1; }
+          echo "QTDIR=$QTDIR"
+          export QTDIR
           cmake --build build --target deploy
           ls -la build/*.zip
 
@@ -83,6 +100,10 @@ jobs:
             || { echo "framework symlinks did not survive the copy"; exit 1; }
           # The signature must still validate after packaging, or users get
           # "damaged" on first launch.
+          # Without the cocoa platform plugin the GUI aborts on launch.
+          test -f "dist/$OUT/Perbug-Qt.app/Contents/PlugIns/platforms/libqcocoa.dylib" || {
+            echo "MISSING Qt cocoa platform plugin - the GUI would abort at startup"
+            find "dist/$OUT/Perbug-Qt.app/Contents" -maxdepth 2; exit 1; }
           codesign --verify --deep --strict --verbose=2 "dist/$OUT/Perbug-Qt.app" \
             || { echo "BROKEN app signature"; exit 1; }
           # The command-line tools people expect alongside it.
